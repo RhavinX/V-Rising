@@ -28,6 +28,11 @@ mkdir -p /root/.steam 2>/dev/null
 chmod -R 777 /root/.steam 2>/dev/null
 
 echo " "
+echo "Updating V-Rising Dedicated Server files..."
+echo " "
+/usr/bin/steamcmd +@sSteamCmdForcePlatformType windows +force_install_dir "$s" +login anonymous +app_update 1829350 validate +quit
+
+echo " "
 if ! grep -o 'avx[^ ]*' /proc/cpuinfo; then
 	unsupported_file="VRisingServer_Data/Plugins/x86_64/lib_burst_generated.dll"
 	echo "AVX or AVX2 not supported; Check if unsupported ${unsupported_file} exists"
