@@ -1,6 +1,8 @@
 FROM docker.io/steamcmd/steamcmd:debian-12
 
-LABEL maintainer="RhavinX"
+LABEL org.opencontainers.image.authors="RhavinX" \
+      org.opencontainers.image.source=https://github.com/RhavinX/V-Rising \
+      org.opencontainers.image.description="V Rising Dedicated Server"
 
 VOLUME ["/home/VRisingServer", "/data"]
 
@@ -9,6 +11,8 @@ RUN rm /etc/apt/sources.list.d/debian.sources && apt-get update && \
     apt-get install -y --no-install-recommends apt-utils wget software-properties-common tzdata xdg-user-dirs procps && \
     apt-get upgrade -y
 RUN useradd -ms /bin/bash steam && \
+    echo steam steam/question select "I AGREE" | debconf-set-selections && \
+    echo steam steam/license note '' | debconf-set-selections && \
     mkdir -pm755 /etc/apt/keyrings && \
     wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key && \
     wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/debian/dists/bookworm/winehq-bookworm.sources && \

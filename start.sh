@@ -72,14 +72,13 @@ echo "Starting V Rising Dedicated Server"
 echo "Trying to remove /tmp/.X0-lock"
 rm -f /tmp/.X0-lock 2>&1
 
-# Added from https://github.com/ldeazevedo/docker-vrising/blob/main/start.sh
 echo "Generating initial Wine configuration..."
 wine64 winecfg
 sleep 5
 
 echo " "
 echo "Starting Xvfb"
-Xvfb :0 -screen 0 1024x768x16 & \
+Xvfb :0 -screen 0 1024x768x16 &
 echo "Launching wine64 V Rising"
 echo " "
 v() {
