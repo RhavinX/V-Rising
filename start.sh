@@ -1,7 +1,8 @@
 #!/bin/bash
 
-s=/home/VRisingServer
-d=/data
+serverhome=/home/VRisingServer
+data=/data
+
 echo "Setting timezone to $TZ"
 echo $TZ > /etc/timezone 2>&1
 ln -snf /usr/share/zoneinfo/$TZ /etc/localtime 2>&1
@@ -24,20 +25,16 @@ term_handler() {
 
 trap 'term_handler' SIGTERM
 
-mkdir -p /root/.steam 2>/dev/null
-chmod -R 777 /root/.steam 2>/dev/null
+echo " "
+echo "Updating/installing V-Rising Dedicated Server files..."
+echo " "
+/usr/bin/steamcmd +@sSteamCmdForcePlatformType windows +force_install_dir "$serverhome" +login anonymous +app_update 1829350 validate +quit
 
-echo " "
-echo "Updating V-Rising Dedicated Server files..."
-echo " "
-/usr/bin/steamcmd +@sSteamCmdForcePlatformType windows +force_install_dir "$s" +login anonymous +app_update 1829350 validate +quit
-
-echo " "
-if ! grep -o 'avx[^ ]*' /proc/cpuinfo; then
+if ! grep -q 'avx[^ ]*' /proc/cpuinfo; then
 	unsupported_file="VRisingServer_Data/Plugins/x86_64/lib_burst_generated.dll"
 	echo "AVX or AVX2 not supported; Check if unsupported ${unsupported_file} exists"
 	if [ -f "${s}/${unsupported_file}" ]; then
-		echo "Changing ${unsupported_file} as attempt to fix issues..."
+		echo "Renaming ${unsupported_file} to fix issues..."
 		mv "${s}/${unsupported_file}" "${s}/${unsupported_file}.bak"
 	fi
 fi
@@ -46,43 +43,42 @@ if [ -z "$WORLDNAME" ]; then
  WORLDNAME="world1"
 fi
 
-mkdir -p "$d/Saves" "$d/Settings" 2>&1
-if [ ! -f "$d/Settings/ServerGameSettings.json" ]; then
-        echo "$d/Settings/ServerGameSettings.json not found. Copying default file."
-        cp "$s/VRisingServer_Data/StreamingAssets/Settings/ServerGameSettings.json" "$d/Settings" 2>&1
+echo "Setting WORLDNAME to ${WORLDNAME}"
+
+mkdir -p "$data/Saves" "$data/Settings" 2>&1
+if [ ! -f "$data/Settings/ServerGameSettings.json" ]; then
+        echo "$data/Settings/ServerGameSettings.json not found. Copying default file."
+        cp "$serverhome/VRisingServer_Data/StreamingAssets/Settings/ServerGameSettings.json" "$data/Settings" 2>&1
 fi
-if [ ! -f "$d/Settings/ServerHostSettings.json" ]; then
-        echo "$p/Settings/ServerHostSettings.json not found. Copying default file."
-        cp "$s/VRisingServer_Data/StreamingAssets/Settings/ServerHostSettings.json" "$d/Settings" 2>&1
+if [ ! -f "$data/Settings/ServerHostSettings.json" ]; then
+        echo "$data/Settings/ServerHostSettings.json not found. Copying default file."
+        cp "$serverhome/VRisingServer_Data/StreamingAssets/Settings/ServerHostSettings.json" "$data/Settings" 2>&1
 fi
-if [ ! -f "$d/Settings/adminlist.txt" ]; then
-        echo "$d/Settings/adminlist.txt not found. Copying default file."
-        cp "$s/VRisingServer_Data/StreamingAssets/Settings/adminlist.txt" "$d/Settings" 2>&1
+if [ ! -f "$data/Settings/adminlist.txt" ]; then
+        echo "$data/Settings/adminlist.txt not found. Copying default file."
+        cp "$serverhome/VRisingServer_Data/StreamingAssets/Settings/adminlist.txt" "$data/Settings" 2>&1
 fi
-if [ ! -f "$d/Settings/banlist.txt" ]; then
-        echo "$d/Settings/banlist.txt not found. Copying default file."
-        cp "$s/VRisingServer_Data/StreamingAssets/Settings/banlist.txt" "$d/Settings" 2>&1
+if [ ! -f "$data/Settings/banlist.txt" ]; then
+        echo "$data/Settings/banlist.txt not found. Copying default file."
+        cp "$serverhome/VRisingServer_Data/StreamingAssets/Settings/banlist.txt" "$data/Settings" 2>&1
 fi
 
-cd "$s" || {
-	echo "Failed to cd to $s"
+cd "$serverhome" || {
+	echo "Failed to cd to $serverhome"
 	exit 1
 }
+
 echo "Starting V Rising Dedicated Server"
-echo "Trying to remove /tmp/.X0-lock"
-rm -f /tmp/.X0-lock 2>&1
+if [ -e /tmp/.X0-lock ]; then
+	rm -f /tmp/.X0-lock 2>&1
+fi
 
-echo "Generating initial Wine configuration..."
 wine64 winecfg
-sleep 5
-
-echo " "
-echo "Starting Xvfb"
+sleep 5 # Sleep is important
 Xvfb :0 -screen 0 1024x768x16 &
-echo "Launching wine64 V Rising"
-echo " "
+# Use WINEDEBUG=-all to disable all messages or fixme-all to disable fixmes
 v() {
-	DISPLAY=:0.0 wine64 /home/VRisingServer/VRisingServer.exe -persistentDataPath "$d" -saveName "$WORLDNAME" 2>&1 &
+	DISPLAY=:0.0 WINEDEBUG=-all wine64 $serverhome/VRisingServer.exe -persistentDataPath "$data" -saveName "$WORLDNAME" 2>&1 &
 }
 v
 # Gets the PID of the last command

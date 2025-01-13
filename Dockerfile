@@ -1,4 +1,4 @@
-FROM docker.io/steamcmd/steamcmd:debian-12
+FROM steamcmd/steamcmd:debian-12
 
 LABEL org.opencontainers.image.authors="RhavinX" \
       org.opencontainers.image.source=https://github.com/RhavinX/V-Rising \
@@ -7,21 +7,16 @@ LABEL org.opencontainers.image.authors="RhavinX" \
 VOLUME ["/home/VRisingServer", "/data"]
 
 ARG DEBIAN_FRONTEND=noninteractive
-RUN rm /etc/apt/sources.list.d/debian.sources && apt-get update && \
-    apt-get install -y --no-install-recommends apt-utils wget software-properties-common tzdata xdg-user-dirs procps && \
-    apt-get upgrade -y
-RUN useradd -ms /bin/bash steam && \
-    echo steam steam/question select "I AGREE" | debconf-set-selections && \
-    echo steam steam/license note '' | debconf-set-selections && \
+COPY start.sh /start.sh
+RUN chmod +x /start.sh && rm /etc/apt/sources.list.d/debian.sources && useradd -ms /bin/bash steam && \
     mkdir -pm755 /etc/apt/keyrings && \
+    apt-get update -y && apt-get upgrade -y && apt-get install -y --no-install-recommends wget && \
     wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key && \
     wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/debian/dists/bookworm/winehq-bookworm.sources && \
-    apt-get update -y && apt-get install -y --no-install-recommends winehq-stable xvfb && \
-    apt-get purge -y wget software-properties-common && apt-get clean -y && apt-get autopurge -y && \    
-    rm -rf /var/lib/apt/lists/* && cd /home/steam
-
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
+    apt-get update -y && apt-get install -y --no-install-recommends tzdata xdg-user-dirs procps \
+    winehq-stable xvfb winbind && \
+    apt-get purge -y wget && apt-get clean -y && apt-get autopurge -y && \    
+    rm -rf /var/lib/apt/lists/*
 
 EXPOSE 27015/udp
 EXPOSE 27016/udp
