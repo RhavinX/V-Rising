@@ -1,1 +1,1 @@
-# Containerized V-Rising Server
+# V Rising Dedicated Server
